@@ -1,0 +1,11 @@
+platform :ios, '11.0'
+use_frameworks!
+
+target 'DMSOpenPGP_Example' do
+  pod 'DMSOpenPGP', :path => '../', :testspecs => ['Tests']
+
+  target 'DMSOpenPGP_Tests' do
+    inherit! :search_paths
+    
+  end
+end
