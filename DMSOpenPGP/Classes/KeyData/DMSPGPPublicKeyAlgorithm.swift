@@ -39,7 +39,7 @@ public enum DMSPGPPublicKeyAlgorithm {
     case unknown
     
     // swiftlint:disable cyclomatic_complexity
-    init(algorithm: jint) {
+    public init(algorithm: jint) {
         switch algorithm {
         case BCBcpgPublicKeyAlgorithmTags.RSA_GENERAL: self = .RSA_GENERAL
         case BCBcpgPublicKeyAlgorithmTags.RSA_ENCRYPT: self = .RSA_ENCRYPT
@@ -70,7 +70,7 @@ public enum DMSPGPPublicKeyAlgorithm {
         // swiftlint:enable cyclomatic_complexity
     }
     
-    var displayName: String {
+    public var displayName: String {
         switch self {
         case .RSA_GENERAL,
              .RSA_SIGN,
@@ -106,7 +106,7 @@ public enum DMSPGPPublicKeyAlgorithm {
         }
     }
     
-    var supportKeyLength: [Int] {
+    public var supportKeyLength: [Int] {
         switch self {
         case .RSA_GENERAL,
              .RSA_SIGN,

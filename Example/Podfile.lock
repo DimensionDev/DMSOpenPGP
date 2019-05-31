@@ -1,10 +1,10 @@
 PODS:
   - BouncyCastle-ObjC (0.1.0)
   - ConsolePrint (0.1.0)
-  - DMSOpenPGP (0.1.0):
+  - DMSOpenPGP (0.1.1):
     - BouncyCastle-ObjC (~> 0.1.0)
     - OpenSSL-Universal (~> 1.0.2.17)
-  - DMSOpenPGP/Tests (0.1.0):
+  - DMSOpenPGP/Tests (0.1.1):
     - BouncyCastle-ObjC (~> 0.1.0)
     - ConsolePrint
     - OpenSSL-Universal (~> 1.0.2.17)
@@ -27,7 +27,7 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   BouncyCastle-ObjC: e9e35f6cf5b1333f6ce4cc6bb5ab19cbf5dfc7aa
   ConsolePrint: 695d494f0a2595d1792ec19483f2aa16e4501c19
-  DMSOpenPGP: 6fcd76e89d6df5a6ee021cafa2bbdb2c5fefdbe6
+  DMSOpenPGP: f352e33af4cd886c2541a4ca27f4358b97df19c0
   OpenSSL-Universal: ff04c2e6befc3f1247ae039e60c93f76345b3b5a
 
 PODFILE CHECKSUM: fa96603078b662718d1e586c5b42addb3266bb0b
