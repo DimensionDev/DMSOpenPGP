@@ -88,7 +88,7 @@ public class DMSPGPEncryptor {
     ///   - password: password for secret key ring
     public init(publicKeyDataList: @autoclosure () -> [PublicKeyData], secretKeyRing: BCOpenpgpPGPSecretKeyRing, password: String) throws {
         let publicKeyDataList = publicKeyDataList()
-        let invalidPublicKeyRings = publicKeyDataList.map { $0.publicKeyRing }.filter { $0.primaryEncryptionKey === nil }
+        let invalidPublicKeyRings = publicKeyDataList.map { $0.publicKeyRing }.filter { $0.primaryEncryptionKey == nil }
         guard invalidPublicKeyRings.isEmpty else {
             throw DMSPGPError.missingEncryptionKey(keyRings: invalidPublicKeyRings)
         }

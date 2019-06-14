@@ -19,7 +19,9 @@ class DMSOpenPGPTests_HiddenRecipients: XCTestCase {
 
     func testCheckRecipients() {
         let decryptor = try! DMSPGPDecryptor(armoredMessage: message)
-        XCTAssertEqual(Array(decryptor.encryptedDataDict.keys), ["0000000000000000"])
+        XCTAssertTrue(decryptor.encryptingKeyIDs.isEmpty)
+        XCTAssertTrue(decryptor.encryptedDataDict.isEmpty)
+        XCTAssertTrue(decryptor.hiddenRecipientsDataList.count == 1)
         consolePrint(decryptor.encryptedDataDict)
     }
 
@@ -27,7 +29,9 @@ class DMSOpenPGPTests_HiddenRecipients: XCTestCase {
         let decryptor = try! DMSPGPDecryptor(armoredMessage: message)
         let RSA = DMSOpenPGPTests.RSA
 
-        XCTAssertEqual(Array(decryptor.encryptedDataDict.keys), ["0000000000000000"])
+        XCTAssertTrue(decryptor.encryptingKeyIDs.isEmpty)
+        XCTAssertTrue(decryptor.encryptedDataDict.isEmpty)
+        XCTAssertTrue(decryptor.hiddenRecipientsDataList.count == 1)
 
         var message = ""
         // Should check all possiable decrypt key due to unknown recipients
@@ -38,7 +42,8 @@ class DMSOpenPGPTests_HiddenRecipients: XCTestCase {
             }
 
             do {
-                message = try decryptor.decrypt(secretKey: decryptKey, password: "RSA")
+                let privateKey = decryptKey.getEncryptingPrivateKey(password: "RSA")
+                message = try decryptor.decrypt(privateKey: privateKey!, encryptedData: decryptor.hiddenRecipientsDataList.first!)
                 return
             } catch {
                 consolePrint(error.localizedDescription)

@@ -80,7 +80,7 @@ public class DMSPGPDecryptor {
             }
         }
 
-        guard !keyIDs.isEmpty && !encryptedDataDict.isEmpty else {
+        guard (!keyIDs.isEmpty && !encryptedDataDict.isEmpty) || !hiddenRecipientsDataList.isEmpty else {
             throw DMSPGPError.invalidMessage
         }
 
