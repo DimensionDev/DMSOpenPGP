@@ -15,6 +15,7 @@ public class DMSPGPDecryptor {
     public let encryptingKeyIDs: [String]
 
     public let encryptedDataDict: [String: BCOpenpgpPGPPublicKeyEncryptedData]
+    public let hiddenRecipientsDataList: [BCOpenpgpPGPPublicKeyEncryptedData]
 
     private(set) public var onePassSignatureList: BCOpenpgpPGPOnePassSignatureList?
     private(set) public var signatureList: BCOpenpgpPGPSignatureList?
@@ -64,15 +65,19 @@ public class DMSPGPDecryptor {
         // Get encrypted data
         var keyIDs = Set<String>()
         var encryptedDataDict: [String: BCOpenpgpPGPPublicKeyEncryptedData] = [:]
+        var hiddenRecipientsDataList = [BCOpenpgpPGPPublicKeyEncryptedData]()
         while iterator.hasNext() {
             guard let data = iterator.next() as? BCOpenpgpPGPPublicKeyEncryptedData else {
                 continue
             }
 
             let keyID = String(fromPGPKeyID: data.getKeyID())
-            
-            keyIDs.insert(keyID)
-            encryptedDataDict[keyID] = data
+            if keyID.isHiddenRecipientID {
+                hiddenRecipientsDataList.append(data)
+            } else {
+                keyIDs.insert(keyID)
+                encryptedDataDict[keyID] = data
+            }
         }
 
         guard !keyIDs.isEmpty && !encryptedDataDict.isEmpty else {
@@ -81,6 +86,7 @@ public class DMSPGPDecryptor {
 
         self.encryptingKeyIDs = Array(keyIDs)
         self.encryptedDataDict = encryptedDataDict
+        self.hiddenRecipientsDataList = hiddenRecipientsDataList
     }
 
 }
@@ -94,16 +100,21 @@ extension DMSPGPDecryptor {
 
         return try decrypt(privateKey: privateKey, keyID: secretKey.keyID)
     }
-
+    
+    
     public func decrypt(privateKey: BCOpenpgpPGPPrivateKey, keyID: String) throws -> String {
         guard let encryptedData = encryptedDataDict[keyID] else {
             throw DMSPGPError.invalidPrivateKey
         }
-
+        return try decrypt(privateKey: privateKey, encryptedData: encryptedData)
+    }
+    
+    /// Decrypt without known keyID, used to support hidden recipients key IDs
+    public func decrypt(privateKey: BCOpenpgpPGPPrivateKey, encryptedData: BCOpenpgpPGPPublicKeyEncryptedData) throws -> String {
         var literalData: BCOpenpgpPGPLiteralData?
-
+        
         var message: String?
-
+        
         guard let input = encryptedData.getDataStream(with: BCOpenpgpOperatorBcBcPublicKeyDataDecryptorFactory(bcOpenpgpPGPPrivateKey: privateKey)) else {
             throw DMSPGPError.invalidPrivateKey
         }
@@ -130,7 +141,7 @@ extension DMSPGPDecryptor {
                 message = {
                     guard let input = data.getInputStream() else { return nil }
                     let output = JavaIoByteArrayOutputStream()
-
+                    
                     BCUtilIoStreams.pipeAll(with: input, with: output)
                     output.close()
                     input.close()
@@ -139,23 +150,22 @@ extension DMSPGPDecryptor {
             default:
                 break
             }
-
+            
             object = try? ExceptionCatcher.catchException {
                 return factory.nextObject()
             }
         }
-
+        
         if let modificationTime = literalData?.getModificationTime() {
             self.modificationTime = Date(javaUtilDate: modificationTime)
         }
-
+        
         guard let result = message else {
             throw DMSPGPError.invalidMessage
         }
-
+        
         return result.trimmingCharacters(in: .whitespacesAndNewlines)
     }
-
 }
 
 extension DMSPGPDecryptor {
@@ -175,5 +185,11 @@ extension DMSPGPDecryptor {
         }
 
         return true
+    }
+}
+
+fileprivate extension String {
+    var isHiddenRecipientID: Bool {
+        return replacingOccurrences(of: "0", with: "").isEmpty
     }
 }
