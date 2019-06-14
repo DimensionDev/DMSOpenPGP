@@ -14,6 +14,11 @@ public class DMSPGPEncryptor {
     public struct PublicKeyData {
         let publicKeyRing: BCOpenpgpPGPPublicKeyRing
         let isHidden: Bool
+        
+        public init(publicKeyRing: BCOpenpgpPGPPublicKeyRing, isHidden: Bool = false) {
+            self.publicKeyRing = publicKeyRing
+            self.isHidden = isHidden
+        }
     }
     
     public let publicKeyDataList: [PublicKeyData]
