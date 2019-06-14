@@ -115,7 +115,11 @@ extension DMSPGPDecryptor {
         
         var message: String?
         
-        guard let input = encryptedData.getDataStream(with: BCOpenpgpOperatorBcBcPublicKeyDataDecryptorFactory(bcOpenpgpPGPPrivateKey: privateKey)) else {
+        let inputStream: JavaIoInputStream? = try? ExceptionCatcher.catchException {
+            let object = encryptedData.getDataStream(with: BCOpenpgpOperatorBcBcPublicKeyDataDecryptorFactory(bcOpenpgpPGPPrivateKey: privateKey))
+            return object
+            } as? JavaIoInputStream
+        guard let input = inputStream else {
             throw DMSPGPError.invalidPrivateKey
         }
         defer {
