@@ -10,27 +10,38 @@ import Foundation
 import BouncyCastle_ObjC
 
 public class DMSPGPEncryptor {
+    
+    public struct PublicKeyData {
+        let publicKeyRing: BCOpenpgpPGPPublicKeyRing
+        let isHidden: Bool
+    }
+    
+    public let publicKeyDataList: [PublicKeyData]
 
-    public let publicKeyRings: [BCOpenpgpPGPPublicKeyRing]
     // Use secret key ring for signature, varify password if valid or not when init Signer
     public let secretKeyRing: BCOpenpgpPGPSecretKeyRing?
     let password: String?
     public var compressAlgorithm = BCBcpgCompressionAlgorithmTags.ZIP
 
     public var encryptedDataGenerator: BCOpenpgpPGPEncryptedDataGenerator? {
-        guard !publicKeyRings.isEmpty else { return nil }
+        guard !publicKeyDataList.isEmpty else { return nil }
         guard let builder = BCOpenpgpOperatorJcajceJcePGPDataEncryptorBuilder(int: BCBcpgSymmetricKeyAlgorithmTags.AES_256)
             .setWithIntegrityPacketWithBoolean(true)?
             .setProviderWith(BCJceProviderBouncyCastleProvider.PROVIDER_NAME) else {
             return nil
         }
         let generator = BCOpenpgpPGPEncryptedDataGenerator(bcOpenpgpOperatorPGPDataEncryptorBuilder: builder)
-        let encryptionKey = publicKeyRings.compactMap { $0.primaryEncryptionKey }   // TODO: should use all encryption key here but not primary key. decrypt vice versa
-        for key in encryptionKey {
-            let keyEncryptionMathodGenerator = BCOpenpgpOperatorBcBcPublicKeyKeyEncryptionMethodGenerator(bcOpenpgpPGPPublicKey: key)
-            generator.addMethod(with: keyEncryptionMathodGenerator)
+        for publicKeyData in publicKeyDataList {
+            // TODO: should use all encryption key here but not primary key. decrypt vice versa
+            guard let encryptionKey = publicKeyData.publicKeyRing.primaryEncryptionKey else { continue }
+            if publicKeyData.isHidden {
+                let anonymousMethodGenerator = DMSPublicKeyKeyEncryptionMethodGenerator(bcOpenpgpPGPPublicKey: encryptionKey)
+                generator.addMethod(with: anonymousMethodGenerator)
+            } else {
+                let keyEncryptionMathodGenerator = BCOpenpgpOperatorBcBcPublicKeyKeyEncryptionMethodGenerator(bcOpenpgpPGPPublicKey: encryptionKey)
+                generator.addMethod(with: keyEncryptionMathodGenerator)
+            }
         }
-
         return generator
     }
 
@@ -38,17 +49,17 @@ public class DMSPGPEncryptor {
 
     /// Encrypt without signature
     ///
-    /// - Parameter publicKeyRings: public key ring collection for encrypt
-    public init(publicKeyRings: [BCOpenpgpPGPPublicKeyRing]) throws {
-        guard !publicKeyRings.isEmpty else {
+    /// - Parameter publicKeyDataList: `PublicKeyData` with public key ring collection for encrypt and an `isHidden` option
+    public init(publicKeyDataList: [PublicKeyData]) throws {
+        guard !publicKeyDataList.isEmpty else {
             throw DMSPGPError.invalidPublicKeyRing
         }
-        let invalidPublicKeyRings = publicKeyRings.filter { $0.primaryEncryptionKey == nil }
+        let invalidPublicKeyRings = publicKeyDataList.map { $0.publicKeyRing }.filter { $0.primaryEncryptionKey == nil }
         guard invalidPublicKeyRings.isEmpty else {
             throw DMSPGPError.missingEncryptionKey(keyRings: invalidPublicKeyRings)
         }
 
-        self.publicKeyRings = publicKeyRings
+        self.publicKeyDataList = publicKeyDataList
         self.secretKeyRing = nil
         self.password = nil
     }
@@ -56,15 +67,15 @@ public class DMSPGPEncryptor {
     /// Encrypt with signature
     ///
     /// - Parameters:
-    ///   - publicKeyRings: public key ring collection for encrypt
+    ///   - publicKeyDataList: `PublicKeyData` with public key ring collection for encrypt and an `isHidden` option
     ///   - secretKeyRing: secret key ring for signature
     ///   - password: password for secret key ring
-    public init(publicKeyRings: [BCOpenpgpPGPPublicKeyRing], secretKeyRing: BCOpenpgpPGPSecretKeyRing, password: String) throws {
-        let invalidPublicKeyRings = publicKeyRings.filter { $0.primaryEncryptionKey == nil }
+    public init(publicKeyDataList: [PublicKeyData], secretKeyRing: BCOpenpgpPGPSecretKeyRing, password: String) throws {
+        let invalidPublicKeyRings = publicKeyDataList.map { $0.publicKeyRing }.filter { $0.primaryEncryptionKey === nil }
         guard invalidPublicKeyRings.isEmpty else {
             throw DMSPGPError.missingEncryptionKey(keyRings: invalidPublicKeyRings)
         }
-        self.publicKeyRings = publicKeyRings
+        self.publicKeyDataList = publicKeyDataList
         self.secretKeyRing = secretKeyRing
         self.password = password
         self.signer = try DMSPGPSigner(secretKeyRing: secretKeyRing, password: password)
@@ -76,7 +87,7 @@ public class DMSPGPEncryptor {
     ///   - secretKeyRing: secret key ring for signature
     ///   - password: password for private key
     public init(secretKeyRing: BCOpenpgpPGPSecretKeyRing, password: String) throws {
-        self.publicKeyRings = []
+        self.publicKeyDataList = []
         self.secretKeyRing = secretKeyRing
         self.password = password
         self.signer = try DMSPGPSigner(secretKeyRing: secretKeyRing, password: password)

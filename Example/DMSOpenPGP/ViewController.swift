@@ -10,6 +10,18 @@ import UIKit
 import DMSOpenPGP
 
 class ViewController: UIViewController {
+    
+    private let message = """
+-----BEGIN PGP MESSAGE-----
+
+hH4DAAAAAAAAAAASAgMECARcH2/pSm7AzYlXj1e2AySoM4C6JoF1UAR4Ot6MfIaM
+M7GVwRi41PdqIA4dsp98B6kxyV3HUv01RA2fBgx9FTA2t0RVFm44rr4Mett6QUTg
+31eFJsFpjJ5sJzcaP69NE+mu13M9+GumNOM59/rcakjSQQFvhZD1yNgHtWpQmMu7
+ZgrPJ/IDy+7tc3QuQkPzK/zg1oPAvIq5PGW90LS1MVtjBGXwsQ2hUdFdHVZ1paSb
+IDEG
+=Dv1Y
+-----END PGP MESSAGE-----
+"""
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -25,6 +37,9 @@ class ViewController: UIViewController {
             //
             // …
             // -----END PGP PUBLIC KEY BLOCK-----
+            
+            let decryptor = try! DMSPGPDecryptor(armoredMessage: message)
+            print(decryptor.encryptedDataDict)
 
         } catch {
             print(error.localizedDescription)
