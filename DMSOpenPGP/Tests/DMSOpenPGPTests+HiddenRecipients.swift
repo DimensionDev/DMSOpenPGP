@@ -44,14 +44,12 @@ class DMSOpenPGPTests_HiddenRecipients: XCTestCase {
             do {
                 let privateKey = decryptKey.getEncryptingPrivateKey(password: "RSA")
                 message = try decryptor.decrypt(privateKey: privateKey!, encryptedData: decryptor.hiddenRecipientsDataList.first!)
-                return
+                XCTAssertEqual(message, "This is one hidden recipients message.")
             } catch {
                 consolePrint(error.localizedDescription)
                 continue
             }
         }
-
-        XCTAssertEqual(message, "This is one hidden recipients message.")
     }
 
 }
