@@ -43,16 +43,12 @@ extension BCOpenpgpPGPPublicKeyRing {
 
         var keys: [BCOpenpgpPGPPublicKey] = []
         while iterator.hasNext() {
-            guard let key = iterator.next() as? BCOpenpgpPGPPublicKey, key.isEncryptionKey() else {
+            guard let key = iterator.next() as? BCOpenpgpPGPPublicKey,
+            !key.isMasterKey(), key.isEncryptionKey() else {
                 continue
             }
-            if key.isMasterKey() {
-                // Append master key as the last choice
-                keys.append(key)
-            } else {
-                // If we find a non-master encryption key, insert it as the first choice
-                keys.insert(key, at: 0)
-            }
+
+            keys.append(key)
         }
 
         return keys
