@@ -184,7 +184,11 @@ extension DMSPGPDecryptor {
         }
 
         let input = JavaIoByteArrayInputStream(byteArray: byteArray)
-        guard let _ = BCOpenpgpPGPUtil.getDecoderStream(with: input) as? BCBcpgArmoredInputStream else {
+        let inputStream: BCBcpgArmoredInputStream? = try? ExceptionCatcher.catchException {
+            return BCOpenpgpPGPUtil.getDecoderStream(with: input)
+        } as? BCBcpgArmoredInputStream
+
+        guard inputStream != nil else {
             return false
         }
 
