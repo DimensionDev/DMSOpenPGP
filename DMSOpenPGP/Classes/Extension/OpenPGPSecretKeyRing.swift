@@ -51,7 +51,9 @@ extension BCOpenpgpPGPSecretKeyRing {
             return nil
         }
 
-        return signingKey.extractPrivateKey(with: decryptor)
+        return try? ExceptionCatcher.catchException { () -> OrgBouncycastleOpenpgpPGPPrivateKey in
+            return signingKey.extractPrivateKey(with: decryptor)
+        } as? OrgBouncycastleOpenpgpPGPPrivateKey
     }
 
     /// Get decrypting secret key from secret key ring (locked)

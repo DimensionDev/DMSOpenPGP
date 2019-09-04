@@ -23,4 +23,20 @@ class DMSOpenPGPTests_Issue: XCTestCase {
         // should not crash and result equal false
         XCTAssertFalse(result)
     }
+
+    func testIssue_3() {
+        let alice = DMSOpenPGPTests.alice
+        let secretKeyArmored = alice.secretKeyRing?.armored()
+        XCTAssertNotNil(secretKeyArmored)
+
+        // should throw error not crash
+        var final: Error?
+        do {
+            _ = try DMSPGPKeyRing(armoredKey: secretKeyArmored!, password: "Wrong Password")
+        } catch {
+            final = error
+        }
+        XCTAssertNotNil(final)
+    }
+
 }
